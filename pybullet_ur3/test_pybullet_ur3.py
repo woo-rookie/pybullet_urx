@@ -21,14 +21,14 @@ p.resetDebugVisualizerCamera(cameraDistance=0.7,cameraYaw=90,cameraPitch=-40,cam
 #######################################
 ###    define and setup robot       ###
 #######################################
-robotUrdfPath = "ur3_pybullet_data/ur3_visual_grabbing_with_rg2.urdf"
+robotUrdfPath = "../ur3_pybullet_data/urdf/ur3_visual_grabbing_with_rg2.urdf"
 robotStartPos = [0, 0, 0]
 robotStartOrn = p.getQuaternionFromEuler([0, 0, 0])
 robotID = p.loadURDF(robotUrdfPath, robotStartPos, robotStartOrn, useFixedBase=True,
                      flags=p.URDF_USE_SELF_COLLISION_EXCLUDE_PARENT)
 # load Object
 tableUid = p.loadURDF("table/table.urdf",basePosition=[0.5,0,-0.65])
-kinect_v2Uid = p.loadURDF("ur3_pybullet_data/kinect_v2.urdf",basePosition=[0.4,0,1.57])
+kinect_v2Uid = p.loadURDF("../ur3_pybullet_data/urdf/kinect_v2.urdf",basePosition=[0.4,0,1.57])
 objectUid = p.loadURDF("cube_small.urdf",basePosition=[0.7,0,0])
 
 jointTypeList = ["REVOLUTE", "PRISMATIC", "SPHERICAL", "PLANAR", "FIXED"]

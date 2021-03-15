@@ -53,7 +53,7 @@ class ur3Sim(object):
         self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.4, 0.1, 0]) + self.offset, flags=flags))
         self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.5, -0.1, 0]) + self.offset, flags=flags))
         self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.6, 0.1, 0]) + self.offset, flags=flags))
-        robotUrdfPath = "ur3_pybullet_data/ur3_visual_grabbing_with_rg2.urdf"
+        robotUrdfPath = "../ur3_pybullet_data/urdf/ur3_visual_grabbing_with_rg2.urdf"
         robotStartPos = [0, 0, 0]
         robotStartOrn = self.bullet_client.getQuaternionFromEuler([0, 0, 0])
         self.ur3 = self.bullet_client.loadURDF(robotUrdfPath, np.array(robotStartPos) + self.offset, robotStartOrn,

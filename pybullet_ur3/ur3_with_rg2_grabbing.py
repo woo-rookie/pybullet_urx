@@ -26,7 +26,7 @@ p.resetDebugVisualizerCamera(cameraDistance=0.7, cameraYaw=0, cameraPitch=0, cam
 #######################################
 ###    define and setup robot       ###
 #######################################
-robotUrdfPath = "ur3_pybullet_data/ur3_visual_grabbing_with_rg2.urdf"
+robotUrdfPath = "../ur3_pybullet_data/urdf/ur3_visual_grabbing_with_rg2.urdf"
 robotStartPos = [0, 0, 0]
 robotStartOrn = p.getQuaternionFromEuler([0, 0, 0])
 robotID = p.loadURDF(robotUrdfPath, robotStartPos, robotStartOrn, useFixedBase=True,
@@ -34,7 +34,7 @@ robotID = p.loadURDF(robotUrdfPath, robotStartPos, robotStartOrn, useFixedBase=T
 # load Object
 flags = p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
 boxUid = p.loadURDF("tray/traybox.urdf", basePosition=[-0.5, 0, -0.1], flags=flags)
-kinect_v2Uid = p.loadURDF("ur3_pybullet_data/kinect_v2.urdf", basePosition=[-0.4, 0, 1.5])
+kinect_v2Uid = p.loadURDF("../ur3_pybullet_data/urdf/kinect_v2.urdf", basePosition=[-0.4, 0, 1.5])
 # objectUid = p.loadURDF("cube_small.urdf",basePosition=[0.3,0,0])
 legos = []
 sphereId = []

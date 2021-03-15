@@ -43,7 +43,7 @@ class ur3Sim(object):
         self.offset = np.array(offset)
 
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
-        robotUrdfPath = "ur3_pybullet_data/ur3_visual_grabbing_with_rg2.urdf"
+        robotUrdfPath = "../ur3_pybullet_data/ur3_visual_grabbing_with_rg2.urdf"
         robotStartPos = [0, 0, 0]
         robotStartOrn = self.bullet_client.getQuaternionFromEuler([0, 0, 0])
         self.ur3 = self.bullet_client.loadURDF(robotUrdfPath, np.array(robotStartPos) + self.offset, robotStartOrn,
