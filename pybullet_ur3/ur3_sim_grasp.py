@@ -22,6 +22,7 @@ rp = [0, -0.5 * math.pi, 0, -math.pi, -0.5 * math.pi, math.pi]
 
 gripper_main_control_joint_name = "gripper_finger1_joint"
 EndEffector_joint_name = "ur_grasptarget_hand"
+# EndEffector_joint_name = "ee_fixed_joint"
 mimic_joint_name = ["gripper_finger2_joint",
                     "gripper_finger1_inner_knuckle_joint",
                     "gripper_finger2_inner_knuckle_joint",
@@ -45,24 +46,26 @@ class ur3Sim(object):
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
         self.legos = []
         self.sphereId = []
-        self.bullet_client.loadURDF("tray/traybox.urdf", [0.5 + offset[0], 0 + offset[1], -0.1 + offset[2]], flags=flags)
-        self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([0.4, -0.1, 0]) + self.offset, flags=flags))
-        self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([0.5, 0.1, 0]) + self.offset, flags=flags))
-        self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([0.6, -0.1, 0]) + self.offset, flags=flags))
-        self.bullet_client.changeVisualShape(self.legos[0], -1, rgbaColor=[1, 0, 0, 1])
-        self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.4, 0.1, 0]) + self.offset, flags=flags))
-        self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.5, -0.1, 0]) + self.offset, flags=flags))
-        self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([0.6, 0.1, 0]) + self.offset, flags=flags))
+        self.bullet_client.loadURDF("tray/traybox.urdf", [-0.4 + offset[0], 0 + offset[1], -0.1 + offset[2]], flags=flags)
+        self.legos = self.bullet_client.loadURDF("lego/lego.urdf", np.array([-0.3, -0.1, 0]) + self.offset, flags=flags)
+        # self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([-0.3, -0.1, 0]) + self.offset, flags=flags))
+        # self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([-0.4, 0.1, 0]) + self.offset, flags=flags))
+        # self.legos.append(self.bullet_client.loadURDF("lego/lego.urdf", np.array([-0.5, -0.1, 0]) + self.offset, flags=flags))
+        # self.bullet_client.changeVisualShape(self.legos[0], -1, rgbaColor=[1, 0, 0, 1])
+        # self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([-0.3, 0.1, 0]) + self.offset, flags=flags))
+        # self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([-0.4, -0.1, 0]) + self.offset, flags=flags))
+        # self.sphereId.append(self.bullet_client.loadURDF("sphere_small.urdf", np.array([-0.5, 0.1, 0]) + self.offset, flags=flags))
         robotUrdfPath = "../ur3_pybullet_data/urdf/ur3_visual_grabbing_with_rg2.urdf"
         robotStartPos = [0, 0, 0]
-        robotStartOrn = self.bullet_client.getQuaternionFromEuler([0, 0, 0])
+        robotStartOrn = self.bullet_client.getQuaternionFromEuler([0, 0, math.pi])
         self.ur3 = self.bullet_client.loadURDF(robotUrdfPath, np.array(robotStartPos) + self.offset, robotStartOrn,
                                                  useFixedBase=True, flags=flags)
 
         self.state = 0
+        self.theta = 0
         self.control_dt = 1. / 120.
-        self.finger_target = 0
-        self.gripper_height = 0.4
+        self.finger_target = 100
+        self.gripper_opening_angle = 0
         # create a constraint to keep the fingers centered
         jointTypeList = ["REVOLUTE", "PRISMATIC", "SPHERICAL", "PLANAR", "FIXED"]
         numJoints = self.bullet_client.getNumJoints(self.ur3)
@@ -84,17 +87,21 @@ class ur3Sim(object):
                                    jointMaxVelocity)
             self.joints[singleInfo.name] = singleInfo
 
-    def gripper_control(self, state):
+    def gripper_control(self, finger_target):
+        # angle calculation
+        # opening_length = 110.46 * math.sin(math.radians(2.08) + theta) - 4.0091318997
+        # theta = math.asin((opening_length + 4.0091318997) / 110.46) - math.radians(2.08)
+        self.gripper_opening_angle = math.asin((finger_target + 4.0091318997) / 110.46) - math.radians(2.08)  # angle calculation
         self.bullet_client.setJointMotorControl2(self.ur3,
                                                  self.joints[gripper_main_control_joint_name].id,
                                                  self.bullet_client.POSITION_CONTROL,
-                                                 targetPosition=state,
+                                                 targetPosition=self.gripper_opening_angle,
                                                  force=100,
                                                  maxVelocity=self.joints[gripper_main_control_joint_name].maxVelocity)
         for i in range(len(mimic_joint_name)):
             joint = self.joints[mimic_joint_name[i]]
             self.bullet_client.setJointMotorControl2(self.ur3, joint.id, self.bullet_client.POSITION_CONTROL,
-                                                     targetPosition=state * mimic_multiplier[i] + mimic_offset[i],
+                                                     targetPosition=self.gripper_opening_angle * mimic_multiplier[i] + mimic_offset[i],
                                                      force=100,
                                                      maxVelocity=joint.maxVelocity)
     def reset(self):
@@ -129,38 +136,33 @@ class ur3Sim(object):
 
     def step(self):
         if self.state == 6:
-            self.finger_target = 0.2
+            self.finger_target = 80
         if self.state == 5:
-            self.finger_target = 0.8
+            self.finger_target = 20
         self.bullet_client.submitProfileTiming("step")
         self.update_state()
 
         if self.state == 1 or self.state == 2 or self.state == 3 or self.state == 4 or self.state == 7:
-            self.gripper_height = 0.05
+            # self.gripper_height = 0.001*(math.s(self.gripper_opening_angle + math.radians(2.08))+26.2)
             if self.state == 2 or self.state == 3 or self.state == 7:
-                self.gripper_height = 0.1
+                self.gripper_height = 0.001*(math.cos(self.gripper_opening_angle + math.radians(2.08)) + 0.02)
             self.t += self.control_dt
             global pos
             if self.state == 3 or self.state == 4:
-                pos, o = self.bullet_client.getBasePositionAndOrientation(self.legos[1])
-                pos = [pos[0], pos[1], -pos[1]+self.gripper_height]
-                # pos = [0.5, 0, self.gripper_height]
+                pos, o = self.bullet_client.getBasePositionAndOrientation(self.legos)
+                pos = [pos[0], pos[1], self.gripper_height+0.04]
                 self.prev_pos = pos
             if self.state == 7:
                 pos = self.prev_pos
-                # diffX = pos[0] + self.offset[0]
-                # diffY = pos[1] + self.offset[1]
+                diffX = pos[0] + self.offset[0]
+                diffY = pos[1] + self.offset[1]
                 # diffZ = pos[2] + self.offset[2] + 0.1
-                # self.prev_pos = [diffX, diffY, diffZ]
-                # pos, o = self.bullet_client.getBasePositionAndOrientation(self.legos[1])
-                # diffX = pos[0] - self.offset[0]
-                # diffY = pos[1] - self.offset[1]
-                self.prev_pos = pos
+                self.prev_pos = [diffX, diffY, self.prev_pos[2]+0.02]
 
-            # orn = self.bullet_client.getQuaternionFromEuler([math.pi, 0, math.pi])
+            orn = self.bullet_client.getQuaternionFromEuler([0., math.pi/2., 0.])
             self.bullet_client.submitProfileTiming("IK")
 
-            jointPoses = self.bullet_client.calculateInverseKinematics(self.ur3, self.joints[EndEffector_joint_name].id, pos, ll, ul,
+            jointPoses = self.bullet_client.calculateInverseKinematics(self.ur3, self.joints[EndEffector_joint_name].id, pos, orn, ll, ul,
                                                                        jr, rp, maxNumIterations=20)
             self.bullet_client.submitProfileTiming()
             for i in range(ur3NumDofs):
